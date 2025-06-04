@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tiger.capstone.dto.EmployeeDTO;
@@ -20,12 +21,16 @@ import com.tiger.capstone.model.UserRole;
 import com.tiger.capstone.repository.EmployeeRepository;
 import com.tiger.capstone.repository.TaskUsersRepository;
 import com.tiger.capstone.repository.UserRoleRepository;
+import com.tiger.capstone.service.AuthenticationService;
 import com.tiger.capstone.service.EmployeeService;
 
 @RestController
 public class EmployeeController {
     @Autowired
     private EmployeeService service;
+
+    @Autowired 
+    private AuthenticationService authenticationService;
 
     @Autowired
     private EmployeeRepository repo;
@@ -37,17 +42,19 @@ public class EmployeeController {
     private TaskUsersRepository taskUsersRepository;
 
     @GetMapping("/user/{userId}")
-    public List<Employee> getEmployee(@PathVariable String userId){
-        return service.getEmployee(userId);
+    public List<Employee> getEmployee(@PathVariable String userId,@RequestHeader("Authorization") String authHeader){
+        String token = authHeader.replace("Bearer ", "");
+        String googleId=authenticationService.getGoogleId(token);
+        return service.getEmployee(googleId);
     }
     @PostMapping("/create-user/{userId}")
-    public ResponseEntity<Employee> createEmployee(@PathVariable String userId,@RequestBody EmployeeDTO dto){
+    public ResponseEntity<Employee> createEmployee(@PathVariable String userId,@RequestBody EmployeeDTO dto,@RequestHeader("Authorization") String authHeader){
         Employee employee=service.createEmployee(dto);
         return new ResponseEntity<>(employee,HttpStatus.CREATED);
     }
 
     @GetMapping("/user/{roleId}/{userId}/{projectId}")
-    public List<Employee> getAssignedUser(@PathVariable int roleId,@PathVariable String userId,@PathVariable String projectId){
+    public List<Employee> getAssignedUser(@PathVariable int roleId,@PathVariable String userId,@PathVariable String projectId,@RequestHeader("Authorization") String authHeader){
         List<Employee> users=new ArrayList<>();
         List<UserRole> userRoles=userRoleRepository.findByProjectId(projectId);
         if (userRoles == null || userRoles.isEmpty()) {
@@ -65,7 +72,7 @@ public class EmployeeController {
     }
 
     @GetMapping("/project/read-only-users/{projectId}/{taskId}/{userId}")
-    public List<Employee> getReadOnlyUser(@PathVariable String projectId,@PathVariable String taskId,@PathVariable String userId){
+    public List<Employee> getReadOnlyUser(@PathVariable String projectId,@PathVariable String taskId,@PathVariable String userId,@RequestHeader("Authorization") String authHeader){
         List<Employee> userList=new ArrayList<>();
         List<TaskUsers> taskUsers=taskUsersRepository.findByTaskId(taskId);
         for(TaskUsers taskUser:taskUsers){

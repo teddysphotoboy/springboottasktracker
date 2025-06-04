@@ -19,11 +19,8 @@ public class EmployeeService {
     private AdminService adminService;
 
     public List<Employee> getEmployee(String id){
-        if(adminService.checkAdmin(id)){
-
-            return repo.findAll();
-        }
-        return null;
+        return repo.findAll();
+        
     }
 
     public Employee createEmployee(EmployeeDTO dto){

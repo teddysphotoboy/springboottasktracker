@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tiger.capstone.dto.ProjectDTO;
@@ -21,6 +22,7 @@ import com.tiger.capstone.repository.ProjectRepository;
 import com.tiger.capstone.repository.TaskRepository;
 import com.tiger.capstone.repository.UserRoleRepository;
 import com.tiger.capstone.service.AdminService;
+import com.tiger.capstone.service.AuthenticationService;
 import com.tiger.capstone.service.ProjectService;
 
 import jakarta.transaction.Transactional;
@@ -33,6 +35,9 @@ public class ProjectController {
     @Autowired
     private ProjectRepository repo;
 
+    @Autowired 
+    private AuthenticationService authenticationService;
+
     @Autowired
     private UserRoleRepository userRoleRepository;
 
@@ -42,13 +47,18 @@ public class ProjectController {
     @Autowired
     private AdminService adminService;
 
+    @Autowired
+    private AuthenticationService authService;
+
     @GetMapping("/projects/{projectId}/{userId}")
-    public Project getProject(@PathVariable String projectId,@PathVariable String userId){
+    public Project getProject(@PathVariable String projectId,@PathVariable String userId,@RequestHeader("Authorization") String authHeader){
         return service.getProject(projectId);
     }
     @PostMapping("/create-project/{userId}")
-    public ResponseEntity<Project> createProject(@PathVariable String userId,@RequestBody ProjectDTO dto){
-        if(adminService.checkAdmin(userId)){
+    public ResponseEntity<Project> createProject(@PathVariable String userId,@RequestBody ProjectDTO dto,@RequestHeader("Authorization") String authHeader){
+        String token = authHeader.replace("Bearer ", "");
+        String googleId=authenticationService.getGoogleId(token);
+        if(adminService.checkAdmin(googleId)){
 
             Project project=service.createProject(dto);
             return new ResponseEntity<>(project,HttpStatus.CREATED);
@@ -57,22 +67,28 @@ public class ProjectController {
     }
 
     @PutMapping("/update-project/{projectId}/{userId}")
-    public void updateProject(@PathVariable String projectId, @PathVariable String userId, @RequestBody ProjectDTO dto){
-        if(adminService.checkAdmin(userId)){
+    public void updateProject(@PathVariable String projectId, @PathVariable String userId, @RequestBody ProjectDTO dto,@RequestHeader("Authorization") String authHeader){
+        String token = authHeader.replace("Bearer ", "");
+        String googleId=authenticationService.getGoogleId(token);
+        if(adminService.checkAdmin(googleId)){
 
             service.updateProject(userId, projectId, dto);
         }
     }
 
     @GetMapping("/projects/{userId}")
-    public List<Project> getUserProjects(@PathVariable String userId){
-        return service.getUserProjects(userId);
+    public List<Project> getUserProjects(@PathVariable String userId,@RequestHeader("Authorization") String authHeader){
+        String token = authHeader.replace("Bearer ", "");
+        String googleId=authService.getGoogleId(token);
+        return service.getUserProjects(googleId);
 
     }
     @DeleteMapping("delete-project/{projectId}/{userId}")
     @Transactional
-    public ResponseEntity<String> deleteProject(@PathVariable String projectId,@PathVariable String userId){
-        if(adminService.checkAdmin(userId)){
+    public ResponseEntity<String> deleteProject(@PathVariable String projectId,@PathVariable String userId,@RequestHeader("Authorization") String authHeader){
+        String token = authHeader.replace("Bearer ", "");
+        String googleId=authService.getGoogleId(token);
+        if(adminService.checkAdmin(googleId)){
 
             List<UserRole> userRoles=userRoleRepository.findByProjectId(projectId);
             for(UserRole userRole:userRoles){

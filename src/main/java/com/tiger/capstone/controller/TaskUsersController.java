@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.tiger.capstone.model.Task;
@@ -18,6 +19,7 @@ import com.tiger.capstone.model.UserRole;
 import com.tiger.capstone.repository.TaskRepository;
 import com.tiger.capstone.repository.TaskUsersRepository;
 import com.tiger.capstone.repository.UserRoleRepository;
+import com.tiger.capstone.service.AuthenticationService;
 
 @RestController
 public class TaskUsersController {
@@ -27,11 +29,14 @@ public class TaskUsersController {
     @Autowired
     private TaskRepository taskRepository;
 
+    @Autowired 
+    private AuthenticationService authenticationService;
+
     @Autowired
     private UserRoleRepository userRoleRepository;
 
     @GetMapping("/task/read-only-user/{projectId}/{userId}")
-    public List<Task> readOnlyUser(@PathVariable String projectId,@PathVariable String userId){
+    public List<Task> readOnlyUser(@PathVariable String projectId,@PathVariable String userId,@RequestHeader("Authorization") String authHeader){
         List<TaskUsers> taskUsers=repo.findByEmployeeId(userId);
         List<Task> filteredTasks=new ArrayList<>();
         for(TaskUsers user:taskUsers){
@@ -41,14 +46,14 @@ public class TaskUsersController {
         return filteredTasks;
     }
     @PostMapping("/create-read-only-user/{userId}/{projectId}/{taskId}")
-    public ResponseEntity<String> createReadOnlyUser(@PathVariable String userId, @PathVariable String projectId,@PathVariable String taskId,@RequestBody TaskUsers taskUser){
+    public ResponseEntity<String> createReadOnlyUser(@PathVariable String userId, @PathVariable String projectId,@PathVariable String taskId,@RequestBody TaskUsers taskUser,@RequestHeader("Authorization") String authHeader){
         if(repo.findByEmployeeIdAndTaskId(taskUser.getEmployeeId(),taskUser.getTaskId())==null){
             repo.save(taskUser);
         }
         return ResponseEntity.ok("Read only user created");
     }
     @DeleteMapping("/delete-read-only-user/{creatorUserId}/{projectId}/{userId}/{taskId}/")
-    public void deleteReadOnlyUser(@PathVariable String creatorUserId,@PathVariable String projectId,@PathVariable String userId,@PathVariable String taskId){
+    public void deleteReadOnlyUser(@PathVariable String creatorUserId,@PathVariable String projectId,@PathVariable String userId,@PathVariable String taskId,@RequestHeader("Authorization") String authHeader){
         TaskUsers taskUser=repo.findByEmployeeIdAndTaskId(userId, taskId);
         UserRole userRole=userRoleRepository.findByEmployeeIdAndProjectId(userId, projectId);
         userRoleRepository.delete(userRole);

@@ -10,6 +10,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -17,6 +18,7 @@ import com.tiger.capstone.dto.UserRoleDTO;
 import com.tiger.capstone.model.UserRole;
 import com.tiger.capstone.repository.UserRoleRepository;
 import com.tiger.capstone.service.AdminService;
+import com.tiger.capstone.service.AuthenticationService;
 import com.tiger.capstone.service.UserRoleService;
 
 @RestController
@@ -27,12 +29,15 @@ public class UserRoleController {
     @Autowired 
     private UserRoleRepository repo;
 
+    @Autowired 
+    private AuthenticationService authenticationService;
+
     @Autowired
     private AdminService adminService;
 
     @PostMapping("/create-user-role/{userId}")
     @ResponseStatus(HttpStatus.CREATED)
-    public Map<String, String> createUserRole(@PathVariable String userId, @RequestBody UserRoleDTO dto) {
+    public Map<String, String> createUserRole(@PathVariable String userId, @RequestBody UserRoleDTO dto,@RequestHeader("Authorization") String authHeader) {
         String message = service.createUserRole(userId, dto);
         return Map.of("detail", message);
     }
@@ -40,7 +45,7 @@ public class UserRoleController {
     @GetMapping("/user-role/{userId}/{projectId}")
     public ResponseEntity<Integer> getUserRoleByProject(
         @PathVariable String userId,
-        @PathVariable String projectId) {
+        @PathVariable String projectId,@RequestHeader("Authorization") String authHeader) {
     
     UserRole userRole = repo.findByEmployeeIdAndProjectId(userId, projectId);
 
@@ -48,8 +53,10 @@ public class UserRoleController {
     }
 
     @DeleteMapping("/delete-user/{roleId}/{userId}/{projectId}/{assignedUser}/")
-    public ResponseEntity<String> deleteUserRole(@PathVariable int roleId,@PathVariable String userId,@PathVariable String projectId,@PathVariable String assignedUser){
-        if(adminService.checkAdmin(userId)){
+    public ResponseEntity<String> deleteUserRole(@PathVariable int roleId,@PathVariable String userId,@PathVariable String projectId,@PathVariable String assignedUser,@RequestHeader("Authorization") String authHeader){
+        String token = authHeader.replace("Bearer ", "");
+        String googleId=authenticationService.getGoogleId(token);
+        if(adminService.checkAdmin(googleId)){
 
             repo.deleteByRoleIdAndEmployeeIdAndProjectId(roleId, assignedUser, projectId);
             return ResponseEntity.ok("User Deleted");
