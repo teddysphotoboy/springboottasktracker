@@ -9,7 +9,7 @@ public class WebConfig implements WebMvcConfigurer {
     @Override
     public void addCorsMappings(CorsRegistry registry) {
         registry.addMapping("/**")
-            .allowedOriginPatterns("https://my-react-app1-fdekf4d5brcnaah6.canadacentral-01.azurewebsites.net/") // Replace with frontend URL
+            .allowedOriginPatterns("https://my-react-app1-fdekf4d5brcnaah6.canadacentral-01.azurewebsites.net/","http://localhost:8080") // Replace with frontend URL
             .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
             .allowedHeaders("*")
             .allowCredentials(true);
