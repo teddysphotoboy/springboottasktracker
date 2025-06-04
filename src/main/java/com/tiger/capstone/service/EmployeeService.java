@@ -15,8 +15,15 @@ public class EmployeeService {
     @Autowired
     private EmployeeRepository repo;
 
+    @Autowired
+    private AdminService adminService;
+
     public List<Employee> getEmployee(String id){
-        return repo.findAll();
+        if(adminService.checkAdmin(id)){
+
+            return repo.findAll();
+        }
+        return null;
     }
 
     public Employee createEmployee(EmployeeDTO dto){
