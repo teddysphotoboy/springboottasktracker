@@ -47,6 +47,9 @@ public class ProjectControllerTest {
     private com.tiger.capstone.repository.UserRoleRepository userRoleRepository;
 
     @MockitoBean
+    private com.tiger.capstone.repository.TaskUsersRepository taskUsersRepository;
+
+    @MockitoBean
     private com.tiger.capstone.repository.TaskRepository taskRepository;
 
     private ObjectMapper objectMapper;
